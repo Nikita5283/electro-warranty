@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>electro-warranty - панель</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="preload" href="fonts/SF-Pro-Text-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="viewport">
+        <div id="world">
+            <svg id="edges"></svg>
+            <div id="edge-labels"></div>
+            <div id="nodes"></div>
+        </div>
+    </div>
+
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-name">electro-warranty</span>
+            <span class="brand-tag">control panel</span>
+        </div>
+    </header>
+
+    <div class="top-actions">
+        <button class="pill-btn" id="auto-btn" title="Автообновление статусов">
+            <span class="live-dot"></span><span id="auto-label">Авто 5с</span>
+        </button>
+        <button class="icon-btn" id="refresh-btn" title="Обновить сейчас"></button>
+    </div>
+
+    <aside class="summary" id="summary"></aside>
+
+    <aside class="drawer" id="drawer"></aside>
+
+    <div class="legend" id="legend"></div>
+
+    <div class="search-wrap">
+        <div class="search-results" id="search-results"></div>
+        <form class="search" id="search-form" autocomplete="off">
+            <input id="search-input" placeholder="Сервис, ручка, таблица..." spellcheck="false">
+            <button type="submit" class="search-go" id="search-go"></button>
+        </form>
+    </div>
+
+    <div class="edge-tip" id="edge-tip"></div>
+
+    <div class="zoom">
+        <button class="zoom-btn" id="zoom-out" title="Отдалить"></button>
+        <span id="zoom-value">100%</span>
+        <button class="zoom-btn" id="zoom-in" title="Приблизить"></button>
+        <span class="zoom-sep"></span>
+        <button class="zoom-btn" id="zoom-fit" title="Показать весь проект"></button>
+        <button class="zoom-btn" id="layout-reset" title="Сбросить расположение"></button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
