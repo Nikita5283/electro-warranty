@@ -1,0 +1,19 @@
+# Виртуальное окружение
+venv/
+.venv/
+env/
+
+# Кэш Python и PyCharm
+__pycache__/
+*.py[cod]
+.idea/
+.vscode/
+
+# Базы данных и файлы логов
+*.db
+*.sqlite3
+logs/
+*.log
+
+# Переменные окружения
+.env
