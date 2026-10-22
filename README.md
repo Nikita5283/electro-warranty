@@ -45,20 +45,6 @@ uvicorn main:app --reload --port 8003
 
 ---
 
-## Конфигурация и переменные окружения
-
-Сервис поддерживает гибкую настройку через переменные окружения (с поддержкой значений по умолчанию):
-
-| Переменная | По умолчанию | Описание |
-| :--- | :--- | :--- |
-| `USE_MOCKS` | `true` | Режим работы: `true` — автономный запуск со встроенными моками соседних сервисов; `false` — сетевые вызовы по HTTP |
-| `DATABASE_URL` | `sqlite:///./requests.db` | Строка подключения к БД (поддерживает `postgresql://user:pass@host:5432/db`) |
-| `CATALOG_SERVICE_URL` | `http://localhost:8002` | Сетевой адрес `catalog-service` |
-| `LOCKER_SERVICE_URL` | `http://localhost:8004` | Сетевой адрес `locker-service` |
-| `STATS_SERVICE_URL` | `http://localhost:8005` | Сетевой адрес `stats-service` |
-
----
-
 ## Сценарии демонстрации паттернов в Swagger UI
 
 Для демонстрации работы паттернов откройте [http://127.0.0.1:8003/docs](http://127.0.0.1:8003/docs):
