@@ -17,7 +17,7 @@ uvicorn main:app --reload --port 8000
 
 | Переменная | По умолчанию |
 |---|---|
-| `USERS_SERVICE_URL` ... `STATS_SERVICE_URL` | `http://localhost:8001` ... `8005` |
+| `USERS_SERVICE_URL` ... `STATS_SERVICE_URL` | `http://127.0.0.1:8001` ... `8005` |
 | `USE_MOCKS` | `true` |
 | `PROXY_TIMEOUT` | `10` |
 | `CORS_ORIGINS` | `*` |

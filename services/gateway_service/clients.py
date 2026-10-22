@@ -21,11 +21,11 @@ class GatewayConfigSingleton:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.service_urls = {
-                "users-service": os.getenv("USERS_SERVICE_URL", "http://localhost:8001"),
-                "catalog-service": os.getenv("CATALOG_SERVICE_URL", "http://localhost:8002"),
-                "request-service": os.getenv("REQUEST_SERVICE_URL", "http://localhost:8003"),
-                "locker-service": os.getenv("LOCKER_SERVICE_URL", "http://localhost:8004"),
-                "stats-service": os.getenv("STATS_SERVICE_URL", "http://localhost:8005"),
+                "users-service": os.getenv("USERS_SERVICE_URL", "http://127.0.0.1:8001"),
+                "catalog-service": os.getenv("CATALOG_SERVICE_URL", "http://127.0.0.1:8002"),
+                "request-service": os.getenv("REQUEST_SERVICE_URL", "http://127.0.0.1:8003"),
+                "locker-service": os.getenv("LOCKER_SERVICE_URL", "http://127.0.0.1:8004"),
+                "stats-service": os.getenv("STATS_SERVICE_URL", "http://127.0.0.1:8005"),
             }
             cls._instance.use_mocks = os.getenv("USE_MOCKS", "true").lower() == "true"
             cls._instance.proxy_timeout = float(os.getenv("PROXY_TIMEOUT", "10"))
