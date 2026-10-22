@@ -52,8 +52,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Request Service (АСГО)",
-    description="Микросервис гарантийных заявок с реализацией 8 паттернов проектирования GoF",
+    title="Request Service",
+    description="Микросервис гарантийных заявок",
     version="1.0.0",
     lifespan=lifespan,
 )
