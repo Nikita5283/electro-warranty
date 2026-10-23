@@ -1,13 +1,14 @@
+import asyncio
 import logging
 from abc import ABC, abstractmethod
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Optional, List, Dict
 
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from models import ServiceRequestModel, StatusHistoryModel
+from models import ServiceRequestModel, StatusHistoryModel, utc_now
 from clients import (
     PurchaseDomainInfo,
     PurchaseDataAdapter,
@@ -17,6 +18,15 @@ from clients import (
 )
 
 logger = logging.getLogger("request-service")
+
+
+def ensure_utc(dt: Optional[datetime]) -> Optional[datetime]:
+    """Приводит datetime к UTC для безопасного вычисления разницы во времени"""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
 
 
 # поведенческий паттерн №1 chain of responsibility (Цепочка обязанностей)
@@ -136,25 +146,21 @@ class AuditLogObserver(StatusObserver):
 
 
 class StatsServiceObserver(StatusObserver):
-    """Подписчик 3 Отправляет статистический факт в stats-service"""
+    """Подписчик 3 Отправляет факт закрытия заявки в stats-service асинхронно"""
     def __init__(self, client: BaseExternalClient):
         self.client = client
 
     async def update(self, db: Session, req: ServiceRequestModel, comment: str) -> None:
-        duration_hours = None
-        if req.closed_at and req.created_at:
-            duration_hours = round((req.closed_at - req.created_at).total_seconds() / 3600, 2)
+        # По архплану отправляется только факт закрытия заявки, а stats-service читает общую БД
+        if req.status == "товар выдан покупателю" or req.closed_at is not None:
+            # Асинхронная отправка без ожидания ответа (fire-and-forget)
+            asyncio.create_task(self._safe_notify(req.id))
 
-        payload = {
-            "request_id": req.id,
-            "product_id": req.product_id,
-            "employee_id": req.employee_id,
-            "status": req.status,
-            "created_at": req.created_at.isoformat(),
-            "closed_at": req.closed_at.isoformat() if req.closed_at else None,
-            "duration_hours": duration_hours,
-        }
-        await self.client.send_stats_event(payload)
+    async def _safe_notify(self, request_id: str) -> None:
+        try:
+            await self.client.send_stats_event({"request_id": request_id})
+        except Exception as exc:
+            logger.error(f"Не удалось асинхронно уведомить stats-service о закрытии заявки {request_id}: {exc}")
 
 
 # структурный паттерн №3 facade
@@ -232,13 +238,22 @@ class RequestServiceFacade:
     ) -> ServiceRequestModel:
         req = self.get_request(request_id)
 
+        # Проверка: сотрудник должен предварительно взять заявку в работу (assign)
+        if not req.employee_id:
+            logger.warning(f"Отказ в смене статуса заявки {request_id}: заявка не взята в работу сотрудником")
+            raise HTTPException(
+                status_code=400,
+                detail="Нельзя изменить статус заявки: она ещё не взята в работу сотрудником (не назначен исполнитель через assign)",
+            )
+
         # 1. Проверка перехода через паттерн State
         current_state = STATE_MAP.get(req.status)
         if not current_state:
             raise HTTPException(status_code=400, detail="Неизвестный текущий статус заявки")
         current_state.validate_transition(new_status, cell_code)
 
-        # 2. Работа с ячейками постамата (locker-service) через Proxy
+        # 2. Если требуется ячейка, занимаем её в locker-service через Proxy
+        occupied_cell = None
         if new_status == "товар обслужен" and cell_code:
             code = await self.client.occupy_cell(cell_code, req.id)
             if code == 409:
@@ -246,19 +261,37 @@ class RequestServiceFacade:
                     status_code=409,
                     detail=f"Ячейка {cell_code} уже занята, выберите другую свободную ячейку",
                 )
+            occupied_cell = cell_code
             req.cell_code = cell_code
 
-        elif new_status == "товар выдан покупателю":
-            if req.cell_code:
-                await self.client.release_cell(req.cell_code, req.id)
-            req.closed_at = datetime.utcnow()
+        # 3. Сохранение нового статуса в БД с компенсацией при сбое
+        try:
+            released_cell = None
+            if new_status == "товар выдан покупателю":
+                released_cell = req.cell_code
+                req.closed_at = utc_now()
 
-        # 3. Сохранение нового статуса и уведомление Observers
-        req.status = new_status
-        if employee_id:
-            req.employee_id = employee_id
+            req.status = new_status
+            if employee_id:
+                req.employee_id = employee_id
 
-        await self._notify_observers(req, comment=comment or f"Статус изменён на '{new_status}'")
-        self.db.commit()
-        self.db.refresh(req)
-        return req
+            await self._notify_observers(req, comment=comment or f"Статус изменён на '{new_status}'")
+            self.db.commit()
+            self.db.refresh(req)
+
+            # Освобождаем ячейку в locker-service только ПОСЛЕ успешного сохранения в БД
+            if new_status == "товар выдан покупателю" and released_cell:
+                await self.client.release_cell(released_cell, req.id)
+
+            return req
+
+        except Exception as exc:
+            self.db.rollback()
+            # Если ячейка была занята в locker-service, но сохранение в БД упало — освобождаем её
+            if occupied_cell:
+                try:
+                    logger.warning(f"Откат занятия ячейки {occupied_cell} из-за ошибки сохранения в БД: {exc}")
+                    await self.client.release_cell(occupied_cell, req.id)
+                except Exception as rel_err:
+                    logger.error(f"Не удалось освободить ячейку {occupied_cell} при откате: {rel_err}")
+            raise

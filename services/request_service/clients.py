@@ -78,7 +78,7 @@ class RealHttpExternalClient(BaseExternalClient):
 
     async def get_purchase(self, purchase_id: str) -> dict:
         url = f"{self.config.catalog_url}/internal/purchases/{purchase_id}"
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with httpx.AsyncClient(timeout=5.0, trust_env=False) as client:
             resp = await client.get(url)
             if resp.status_code == 404:
                 raise HTTPException(status_code=422, detail="Покупка не найдена в catalog-service")
@@ -87,20 +87,28 @@ class RealHttpExternalClient(BaseExternalClient):
 
     async def occupy_cell(self, cell_code: str, request_id: str) -> int:
         url = f"{self.config.locker_url}/internal/cells/{cell_code}/occupy"
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with httpx.AsyncClient(timeout=5.0, trust_env=False) as client:
             resp = await client.post(url, json={"request_id": request_id})
             return resp.status_code
 
     async def release_cell(self, cell_code: str, request_id: str) -> int:
         url = f"{self.config.locker_url}/internal/cells/{cell_code}/release"
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with httpx.AsyncClient(timeout=5.0, trust_env=False) as client:
             resp = await client.post(url, json={"request_id": request_id})
             return resp.status_code
 
     async def send_stats_event(self, payload: dict) -> None:
-        url = f"{self.config.stats_url}/internal/events"
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            await client.post(url, json=payload)
+        request_id = payload.get("request_id")
+        # По архплану отправляется только факт закрытия заявки, а stats-service читает общую БД
+        url = f"{self.config.stats_url}/internal/requests/{request_id}/close"
+        async with httpx.AsyncClient(timeout=5.0, trust_env=False) as client:
+            try:
+                resp = await client.post(url, json={"request_id": request_id})
+                if resp.status_code == 404:
+                    alt_url = f"{self.config.stats_url}/internal/events"
+                    await client.post(alt_url, json={"request_id": request_id})
+            except Exception as exc:
+                logger.error(f"Не удалось отправить уведомление о закрытии в stats-service: {exc}")
 
 
 class MockExternalClient(BaseExternalClient):
@@ -179,8 +187,9 @@ class LoggingClientProxy(BaseExternalClient):
             raise HTTPException(status_code=503, detail="locker-service временно недоступен")
 
     async def send_stats_event(self, payload: dict) -> None:
-        logger.info(f"Интеграция stats-service -> POST /internal/events | request_id={payload.get('request_id')}")
+        request_id = payload.get("request_id")
+        logger.info(f"Интеграция stats-service -> факт закрытия заявки request_id={request_id}")
         try:
             await self._wrapped.send_stats_event(payload)
         except Exception as exc:
-            logger.error(f"Не удалось отправить событие в stats-service: {exc}")
+            logger.error(f"Не удалось отправить факт закрытия в stats-service: {exc}")
