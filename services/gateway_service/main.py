@@ -37,7 +37,7 @@ if not logger.handlers:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     config = GatewayConfigSingleton()
-    app.state.http = httpx.AsyncClient(timeout=config.proxy_timeout)
+    app.state.http = httpx.AsyncClient(timeout=config.proxy_timeout, trust_env=False)
     mode = "заглушки (USE_MOCKS=true)" if config.use_mocks else "users-service"
     logger.info(f"API Gateway запущен. Проверка токенов: {mode}")
     yield

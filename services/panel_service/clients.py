@@ -115,7 +115,8 @@ class OpenApiAdapter:
 
 class ServiceClient:
     def __init__(self, http: httpx.AsyncClient):
-        self.http = http
+        # Отключаем системный прокси для локальных межсервисных вызовов 127.0.0.1
+        self.http = http if not getattr(http, "trust_env", True) else httpx.AsyncClient(trust_env=False)
         self.config = PanelConfigSingleton()
 
     async def check_service(self, service_id: str) -> dict:

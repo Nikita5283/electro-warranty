@@ -18,7 +18,7 @@ from topology import SERVICES, DATABASES, EDGES, MOCK_TOKENS
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.http = httpx.AsyncClient()
+    app.state.http = httpx.AsyncClient(trust_env=False)
     app.state.readers = {}
     yield
     await app.state.http.aclose()
