@@ -10,7 +10,7 @@
 | users-service | 8001 | Регистрация, вход, JWT, пользователи и роли | в разработке |
 | catalog-service | 8002 | Каталог товаров, покупки, срок гарантии | в разработке |
 | [request-service](services/request_service/README.md) | 8003 | Гарантийные заявки и история статусов | готов |
-| locker-service | 8004 | Ячейки постамата | в разработке |
+| [locker-service](services/locker_service/README.md) | 8004 | Ячейки постамата | готов |
 | stats-service | 8005 | Статистика и отчёты для руководителя | в разработке |
 | [panel](services/panel_service/README.md) | 9000 | Панель разработчика: схема проекта, статусы, ручки, таблицы | готов |
 
@@ -21,6 +21,7 @@
 ```
 services/
   gateway_service/   API Gateway
+  locker_service/    ячейки постамата
   panel_service/     панель разработчика
   request_service/   сервис заявок
 requirements.txt     общие зависимости

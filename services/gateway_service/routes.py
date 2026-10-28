@@ -47,6 +47,7 @@ ROUTES = [
     RouteRule("POST", "/api/v1/requests/{id}/status", "request-service", [EMPLOYEE]),
 
     RouteRule("GET", "/api/v1/cells", "locker-service", [EMPLOYEE]),
+    RouteRule("POST", "/api/v1/cells", "locker-service", [ADMIN]),
 
     RouteRule("GET", "/api/v1/stats/requests", "stats-service", [MANAGER]),
     RouteRule("GET", "/api/v1/stats/employees", "stats-service", [MANAGER]),

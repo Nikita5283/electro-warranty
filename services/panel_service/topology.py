@@ -23,6 +23,7 @@ SERVICES = [
             {"method": "POST", "path": "/api/v1/requests/{id}/assign", "roles": "EMPLOYEE", "target": "requests"},
             {"method": "POST", "path": "/api/v1/requests/{id}/status", "roles": "EMPLOYEE", "target": "requests"},
             {"method": "GET", "path": "/api/v1/cells", "roles": "EMPLOYEE", "target": "lockers"},
+            {"method": "POST", "path": "/api/v1/cells", "roles": "ADMIN", "target": "lockers"},
             {"method": "GET", "path": "/api/v1/stats/requests", "roles": "MANAGER", "target": "stats"},
             {"method": "GET", "path": "/api/v1/stats/employees", "roles": "MANAGER", "target": "stats"},
             {"method": "GET", "path": "/api/v1/stats/products", "roles": "MANAGER", "target": "stats"},
@@ -88,6 +89,7 @@ SERVICES = [
         "endpoints": [
             {"method": "GET", "path": "/health"},
             {"method": "GET", "path": "/api/v1/cells"},
+            {"method": "POST", "path": "/api/v1/cells"},
             {"method": "POST", "path": "/internal/cells/{code}/occupy"},
             {"method": "POST", "path": "/internal/cells/{code}/release"},
         ],
@@ -150,6 +152,7 @@ DATABASES = [
         "tables": [
             {"name": "cell", "columns": ["id", "code", "status"]},
             {"name": "cell_assignment", "columns": ["id", "cell_id", "request_id", "assigned_at", "released_at"]},
+            {"name": "audit_log", "columns": ["id", "entity", "entity_id", "action", "old_value", "new_value", "changed_by", "changed_at"]},
         ],
     },
 ]
@@ -191,7 +194,7 @@ EDGES = [
     {"from": "stats", "to": "requests_db", "kind": "common", "label": "readonly",
      "data": "Только чтение service_request и status_history (общая БД заявок)"},
     {"from": "lockers", "to": "lockers_db", "kind": "own", "label": "",
-     "data": "Чтение и запись таблиц cell и cell_assignment"},
+     "data": "Чтение и запись таблиц cell, cell_assignment и audit_log"},
 ]
 
 MOCK_TOKENS = ["client", "employee", "manager", "admin"]
