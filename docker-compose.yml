@@ -1,0 +1,154 @@
+services:
+  users-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: users-service
+    working_dir: /app/services/users_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "8001:8001"
+    environment:
+      - USERS_DB_URL=sqlite:////app/services/users_service/users.db
+      - JWT_SECRET=electro-warranty-jwt-super-secret-key-2025
+      - SEED_USERS=true
+    volumes:
+      - ./services/users_service:/app/services/users_service
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    restart: unless-stopped
+    networks:
+      - warranty-net
+
+  locker-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: locker-service
+    working_dir: /app/services/locker_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8004"]
+    ports:
+      - "8004:8004"
+    environment:
+      - LOCKERS_DB_URL=sqlite:////app/services/locker_service/lockers.db
+      - SEED_CELLS=A-101,A-102,A-103,A-104,A-105,B-201,B-202,B-203,B-204,B-205
+    volumes:
+      - ./services/locker_service:/app/services/locker_service
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8004/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    restart: unless-stopped
+    networks:
+      - warranty-net
+
+  request-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: request-service
+    working_dir: /app/services/request_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=sqlite:////app/services/request_service/requests.db
+      - LOCKER_SERVICE_URL=http://locker-service:8004
+      - CATALOG_SERVICE_URL=http://127.0.0.1:8002
+      - STATS_SERVICE_URL=http://127.0.0.1:8005
+      - USE_MOCKS=true
+    volumes:
+      - ./services/request_service:/app/services/request_service
+    depends_on:
+      locker-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8003/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    restart: unless-stopped
+    networks:
+      - warranty-net
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    working_dir: /app/services/gateway_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    environment:
+      - USERS_SERVICE_URL=http://users-service:8001
+      - REQUEST_SERVICE_URL=http://request-service:8003
+      - LOCKER_SERVICE_URL=http://locker-service:8004
+      - CATALOG_SERVICE_URL=http://127.0.0.1:8002
+      - STATS_SERVICE_URL=http://127.0.0.1:8005
+      - USE_MOCKS=false
+    volumes:
+      - ./services/gateway_service:/app/services/gateway_service
+    depends_on:
+      users-service:
+        condition: service_healthy
+      request-service:
+        condition: service_healthy
+      locker-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ping || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    restart: unless-stopped
+    networks:
+      - warranty-net
+
+  panel-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: panel-service
+    working_dir: /app/services/panel_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9000"]
+    ports:
+      - "9000:9000"
+    environment:
+      - GATEWAY_URL=http://gateway-service:8000
+      - USERS_SERVICE_URL=http://users-service:8001
+      - REQUEST_SERVICE_URL=http://request-service:8003
+      - LOCKER_SERVICE_URL=http://locker-service:8004
+      - CATALOG_SERVICE_URL=http://127.0.0.1:8002
+      - STATS_SERVICE_URL=http://127.0.0.1:8005
+      - USERS_DB_URL=sqlite:////app/services/users_service/users.db
+      - REQUESTS_DB_URL=sqlite:////app/services/request_service/requests.db
+      - LOCKERS_DB_URL=sqlite:////app/services/locker_service/lockers.db
+    volumes:
+      - ./services:/app/services
+    depends_on:
+      - gateway-service
+      - users-service
+      - request-service
+      - locker-service
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    restart: unless-stopped
+    networks:
+      - warranty-net
+
+networks:
+  warranty-net:
+    driver: bridge
