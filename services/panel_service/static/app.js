@@ -1021,7 +1021,41 @@ function renderServiceOverview(service) {
         }
         html += "</div>";
     }
+    html += patternsHtml(service);
     body.innerHTML = html;
+}
+
+const PATTERN_KINDS = {
+    creational: { name: "Порождающий", color: "green" },
+    structural: { name: "Структурный", color: "blue" },
+    behavioral: { name: "Поведенческий", color: "amber" },
+    other: { name: "Вспомогательный", color: "" },
+};
+
+function patternsHtml(service) {
+    const patterns = service.patterns || [];
+    if (!patterns.length) {
+        return '<div class="section-label">Паттерны</div><div class="notice amber">Сервис ещё в разработке, паттерны появятся вместе с кодом.</div>';
+    }
+    let html = `<div class="section-label">Паттерны · ${patterns.length}</div>`;
+    for (const p of patterns) {
+        const kind = PATTERN_KINDS[p.kind] || PATTERN_KINDS.other;
+        html += `
+            <details class="pattern">
+                <summary>
+                    <span class="pattern-title">
+                        <span class="pattern-name">${esc(p.name)} <span class="pattern-en">${esc(p.en)}</span></span>
+                        <span class="pattern-what">${esc(p.what)}</span>
+                    </span>
+                    <span class="badge ${kind.color}">${esc(kind.name)}</span>
+                </summary>
+                <div class="pattern-body">
+                    <ul class="pattern-how">${p.how.map((line) => `<li>${esc(line)}</li>`).join("")}</ul>
+                    <div class="pattern-where"><span class="mono-pill">${esc(p.file)}</span>${p.classes.map((c) => `<span class="chip mono">${esc(c)}</span>`).join("")}</div>
+                </div>
+            </details>`;
+    }
+    return html;
 }
 
 function endpointKey(ep) {
