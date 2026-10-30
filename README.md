@@ -7,7 +7,7 @@
 | Сервис | Порт | Назначение | Статус |
 |---|---|---|---|
 | [gateway](services/gateway_service/README.md) | 8000 | Единая точка входа: проверка токена и роли, маршрутизация | готов |
-| users-service | 8001 | Регистрация, вход, JWT, пользователи и роли | в разработке |
+| [users-service](services/users_service/README.md) | 8001 | Регистрация, вход, JWT, пользователи и роли | готов |
 | catalog-service | 8002 | Каталог товаров, покупки, срок гарантии | в разработке |
 | [request-service](services/request_service/README.md) | 8003 | Гарантийные заявки и история статусов | готов |
 | [locker-service](services/locker_service/README.md) | 8004 | Ячейки постамата | готов |
@@ -24,6 +24,7 @@ services/
   locker_service/    ячейки постамата
   panel_service/     панель разработчика
   request_service/   сервис заявок
+  users_service/     пользователи и аутентификация
 requirements.txt     общие зависимости
 ```
 
@@ -35,7 +36,31 @@ requirements.txt     общие зависимости
 
 ## Запуск всей системы
 
-_TODO: docker-compose - все сервисы и PostgreSQL одной командой._
+Все сервисы упакованы в Docker и запускаются одной командой:
+
+```bash
+docker compose up --build
+```
+
+Запуск в фоновом режиме:
+
+```bash
+docker compose up --build -d
+```
+
+### Доступ к сервисам после запуска:
+
+- **Панель разработчика:** [http://localhost:9000](http://localhost:9000)
+- **API Gateway:** [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+- **Users Service (Swagger UI):** [http://localhost:8001/docs](http://localhost:8001/docs)
+- **Request Service (Swagger UI):** [http://localhost:8003/docs](http://localhost:8003/docs)
+- **Locker Service (Swagger UI):** [http://localhost:8004/docs](http://localhost:8004/docs)
+
+### Остановка системы:
+
+```bash
+docker compose down
+```
 
 ## Команда
 
