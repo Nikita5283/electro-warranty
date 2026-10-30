@@ -123,9 +123,9 @@ class ServiceClient:
         url = self.config.service_urls[service_id]
         start = time.perf_counter()
         try:
-            resp = await self.http.get(url + "/health", timeout=4.0)
+            resp = await self.http.get(url + "/health", timeout=httpx.Timeout(1.5, connect=0.5))
         except httpx.TimeoutException:
-            return {"id": service_id, "url": url, "online": True, "status": "timeout", "latency_ms": None, "health": None}
+            return {"id": service_id, "url": url, "online": False, "status": "timeout", "latency_ms": None, "health": None}
         except httpx.RequestError:
             return {"id": service_id, "url": url, "online": False, "status": "offline", "latency_ms": None, "health": None}
 

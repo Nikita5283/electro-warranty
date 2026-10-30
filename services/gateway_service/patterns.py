@@ -164,8 +164,8 @@ class GatewayFacade:
 
     async def _check_service(self, base_url: str) -> str:
         try:
-            resp = await self.http.get(base_url + "/health", timeout=2.0)
-        except httpx.RequestError:
+            resp = await self.http.get(base_url + "/health", timeout=httpx.Timeout(1.0, connect=0.5))
+        except (httpx.RequestError, Exception):
             return "unavailable"
         if resp.status_code == 200:
             return "ok"

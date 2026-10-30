@@ -68,6 +68,11 @@ async def log_requests_middleware(request: Request, call_next):
     return response
 
 
+@app.get("/ping", tags=["System"])
+async def ping():
+    return {"status": "ok"}
+
+
 @app.get("/health", tags=["System"])
 async def health_check(request: Request):
     facade = GatewayFacade(request.app.state.http)
