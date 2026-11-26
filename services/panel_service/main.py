@@ -13,6 +13,7 @@ from sqlalchemy.engine import make_url
 
 from clients import PanelConfigSingleton, ServiceClient, OpenApiAdapter, PROJECT_ROOT
 from db_reader import DatabaseReaderFactory
+from patterns_info import PATTERNS
 from topology import SERVICES, DATABASES, EDGES, MOCK_TOKENS
 
 
@@ -96,6 +97,7 @@ def get_topology():
     for service in SERVICES:
         item = dict(service)
         item["url"] = config.service_urls[service["id"]]
+        item["patterns"] = PATTERNS.get(service["id"], [])
         services.append(item)
     databases = []
     for db in DATABASES:

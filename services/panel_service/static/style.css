@@ -425,3 +425,20 @@ body.drawer-open .zoom { right: 580px; }
 .tip-state { margin-top: 10px; }
 .tip-title .term-def { left: -2px; top: calc(100% + 8px); bottom: auto; transform: translateY(-4px) scale(0.98); background: #303030; }
 .tip-title .term:hover .term-def, .tip-title .term:focus .term-def { transform: none; }
+
+.pattern { background: var(--el); border-radius: 16px; margin-bottom: 6px; overflow: hidden; }
+.pattern summary { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; cursor: pointer; list-style: none; transition: background 0.2s; }
+.pattern summary::-webkit-details-marker { display: none; }
+.pattern summary:hover { background: var(--el-hover); }
+.pattern summary .badge { flex-shrink: 0; }
+.pattern-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.pattern-name { font-size: 13px; font-weight: 600; }
+.pattern-en { color: var(--dim); font-weight: 500; margin-left: 4px; }
+.pattern-what { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.pattern-body { padding: 2px 14px 14px; animation: fade 0.3s var(--ease) both; }
+.pattern-how { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.55; color: var(--text-90); }
+.pattern-how li + li { margin-top: 5px; }
+.pattern-how li::marker { color: var(--dim); }
+.pattern-where { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.pattern-where .chip { background: var(--card); }
+.chip.mono { font-family: var(--mono); font-size: 11px; }
