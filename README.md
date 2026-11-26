@@ -8,10 +8,10 @@
 |---|---|---|---|
 | [gateway](services/gateway_service/README.md) | 8000 | Единая точка входа: проверка токена и роли, маршрутизация | готов |
 | [users-service](services/users_service/README.md) | 8001 | Регистрация, вход, JWT, пользователи и роли | готов |
-| catalog-service | 8002 | Каталог товаров, покупки, срок гарантии | в разработке |
+| [catalog-service](services/catalog_service/README.md) | 8002 | Каталог товаров, покупки, срок гарантии | готов |
 | [request-service](services/request_service/README.md) | 8003 | Гарантийные заявки и история статусов | готов |
 | [locker-service](services/locker_service/README.md) | 8004 | Ячейки постамата | готов |
-| stats-service | 8005 | Статистика и отчёты для руководителя | в разработке |
+| [stats-service](services/stats_service/README.md) | 8005 | Статистика и отчёты для руководителя | готов |
 | [panel](services/panel_service/README.md) | 9000 | Панель разработчика: схема проекта, статусы, ручки, таблицы | готов |
 
 Все внешние запросы идут через gateway (`http://127.0.0.1:8000`). Методы `/internal/*` используются только для общения сервисов между собой.
@@ -20,10 +20,12 @@
 
 ```
 services/
+  catalog_service/   каталог товаров и покупки
   gateway_service/   API Gateway
   locker_service/    ячейки постамата
   panel_service/     панель разработчика
   request_service/   сервис заявок
+  stats_service/     статистика и отчёты
   users_service/     пользователи и аутентификация
 requirements.txt     общие зависимости
 ```
@@ -53,8 +55,10 @@ docker compose up --build -d
 - **Панель разработчика:** [http://localhost:9000](http://localhost:9000)
 - **API Gateway:** [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
 - **Users Service (Swagger UI):** [http://localhost:8001/docs](http://localhost:8001/docs)
+- **Catalog Service (Swagger UI):** [http://localhost:8002/docs](http://localhost:8002/docs)
 - **Request Service (Swagger UI):** [http://localhost:8003/docs](http://localhost:8003/docs)
 - **Locker Service (Swagger UI):** [http://localhost:8004/docs](http://localhost:8004/docs)
+- **Stats Service (Swagger UI):** [http://localhost:8005/docs](http://localhost:8005/docs)
 
 ### Остановка системы:
 
