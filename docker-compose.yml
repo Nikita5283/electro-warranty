@@ -24,6 +24,30 @@ services:
     networks:
       - warranty-net
 
+  catalog-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: catalog-service
+    working_dir: /app/services/catalog_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002"]
+    ports:
+      - "8002:8002"
+    environment:
+      - CATALOG_DB_URL=sqlite:////app/services/catalog_service/catalog.db
+      - SEED_CATALOG=true
+    volumes:
+      - ./services/catalog_service:/app/services/catalog_service
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    restart: unless-stopped
+    networks:
+      - warranty-net
+
   locker-service:
     build:
       context: .
@@ -60,16 +84,46 @@ services:
     environment:
       - DATABASE_URL=sqlite:////app/services/request_service/requests.db
       - LOCKER_SERVICE_URL=http://locker-service:8004
-      - CATALOG_SERVICE_URL=http://127.0.0.1:8002
-      - STATS_SERVICE_URL=http://127.0.0.1:8005
-      - USE_MOCKS=true
+      - CATALOG_SERVICE_URL=http://catalog-service:8002
+      - STATS_SERVICE_URL=http://stats-service:8005
+      - USE_MOCKS=false
     volumes:
       - ./services/request_service:/app/services/request_service
     depends_on:
       locker-service:
         condition: service_healthy
+      catalog-service:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8003/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    restart: unless-stopped
+    networks:
+      - warranty-net
+
+  stats-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stats-service
+    working_dir: /app/services/stats_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8005"]
+    ports:
+      - "8005:8005"
+    environment:
+      - REQUESTS_DB_URL=sqlite:////app/services/request_service/requests.db
+      - USERS_SERVICE_URL=http://users-service:8001
+      - CATALOG_SERVICE_URL=http://catalog-service:8002
+    volumes:
+      - ./services/stats_service:/app/services/stats_service
+      - ./services/request_service:/app/services/request_service:ro
+    depends_on:
+      - request-service
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8005/health || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -89,19 +143,23 @@ services:
       - "8000:8000"
     environment:
       - USERS_SERVICE_URL=http://users-service:8001
+      - CATALOG_SERVICE_URL=http://catalog-service:8002
       - REQUEST_SERVICE_URL=http://request-service:8003
       - LOCKER_SERVICE_URL=http://locker-service:8004
-      - CATALOG_SERVICE_URL=http://127.0.0.1:8002
-      - STATS_SERVICE_URL=http://127.0.0.1:8005
+      - STATS_SERVICE_URL=http://stats-service:8005
       - USE_MOCKS=false
     volumes:
       - ./services/gateway_service:/app/services/gateway_service
     depends_on:
       users-service:
         condition: service_healthy
+      catalog-service:
+        condition: service_healthy
       request-service:
         condition: service_healthy
       locker-service:
+        condition: service_healthy
+      stats-service:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/ping || exit 1"]
@@ -125,11 +183,12 @@ services:
     environment:
       - GATEWAY_URL=http://gateway-service:8000
       - USERS_SERVICE_URL=http://users-service:8001
+      - CATALOG_SERVICE_URL=http://catalog-service:8002
       - REQUEST_SERVICE_URL=http://request-service:8003
       - LOCKER_SERVICE_URL=http://locker-service:8004
-      - CATALOG_SERVICE_URL=http://127.0.0.1:8002
-      - STATS_SERVICE_URL=http://127.0.0.1:8005
+      - STATS_SERVICE_URL=http://stats-service:8005
       - USERS_DB_URL=sqlite:////app/services/users_service/users.db
+      - CATALOG_DB_URL=sqlite:////app/services/catalog_service/catalog.db
       - REQUESTS_DB_URL=sqlite:////app/services/request_service/requests.db
       - LOCKERS_DB_URL=sqlite:////app/services/locker_service/lockers.db
     volumes:
@@ -137,8 +196,10 @@ services:
     depends_on:
       - gateway-service
       - users-service
+      - catalog-service
       - request-service
       - locker-service
+      - stats-service
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9000/ || exit 1"]
       interval: 5s
