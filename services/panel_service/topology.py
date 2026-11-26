@@ -12,7 +12,9 @@ SERVICES = [
             {"method": "POST", "path": "/api/v1/auth/login", "roles": "без токена", "target": "users"},
             {"method": "GET", "path": "/api/v1/users/{id}", "roles": "EMPLOYEE, MANAGER", "target": "users"},
             {"method": "GET", "path": "/api/v1/products", "roles": "все роли", "target": "catalog"},
+            {"method": "POST", "path": "/api/v1/products", "roles": "ADMIN", "target": "catalog"},
             {"method": "GET", "path": "/api/v1/products/{id}", "roles": "все роли", "target": "catalog"},
+            {"method": "PUT", "path": "/api/v1/products/{id}", "roles": "ADMIN", "target": "catalog"},
             {"method": "POST", "path": "/api/v1/purchases", "roles": "CLIENT", "target": "catalog"},
             {"method": "GET", "path": "/api/v1/purchases", "roles": "CLIENT", "target": "catalog"},
             {"method": "GET", "path": "/api/v1/purchases/{id}", "roles": "CLIENT, EMPLOYEE", "target": "catalog"},
@@ -55,6 +57,9 @@ SERVICES = [
         "endpoints": [
             {"method": "GET", "path": "/health"},
             {"method": "GET", "path": "/api/v1/products"},
+            {"method": "POST", "path": "/api/v1/products"},
+            {"method": "GET", "path": "/api/v1/products/{id}"},
+            {"method": "PUT", "path": "/api/v1/products/{id}"},
             {"method": "POST", "path": "/api/v1/purchases"},
             {"method": "GET", "path": "/api/v1/purchases"},
             {"method": "GET", "path": "/api/v1/purchases/{id}"},
@@ -130,6 +135,7 @@ DATABASES = [
         "tables": [
             {"name": "product", "columns": ["id", "name", "category", "price", "warranty_months"]},
             {"name": "purchase", "columns": ["id", "product_id", "client_id", "serial_number", "purchase_date", "warranty_until"]},
+            {"name": "audit_log", "columns": ["id", "entity", "entity_id", "action", "old_value", "new_value", "changed_by", "changed_at"]},
         ],
     },
     {

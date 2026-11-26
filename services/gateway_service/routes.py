@@ -35,6 +35,8 @@ ROUTES = [
 
     RouteRule("GET", "/api/v1/products", "catalog-service", ALL_ROLES),
     RouteRule("GET", "/api/v1/products/{id}", "catalog-service", ALL_ROLES),
+    RouteRule("POST", "/api/v1/products", "catalog-service", [ADMIN]),
+    RouteRule("PUT", "/api/v1/products/{id}", "catalog-service", [ADMIN]),
     RouteRule("POST", "/api/v1/purchases", "catalog-service", [CLIENT]),
     RouteRule("GET", "/api/v1/purchases", "catalog-service", [CLIENT]),
     RouteRule("GET", "/api/v1/purchases/{id}", "catalog-service", [CLIENT, EMPLOYEE]),
